@@ -195,10 +195,51 @@
         )
       )
       (if (setq codeDict (SouthEntDispatch ss))
-        (progn
-          ;Per SOUTH code statistics
-          (setq
-            countLst
+        (apply
+          '(lambda (countLst)
+            (prompt
+              (strcat
+                "\n================================================================"
+                "\n* " (textDict "i_total_codes") ": " (itoa (length countLst))
+                "\n* " (textDict "i_total_ent") ": "
+                (itoa (apply '+ (mapcar '(lambda (lst) (car (cdr lst))) countLst)))
+                "\n* " (textDict "i_total_ent_") ": "
+                (itoa
+                  (apply
+                    '+
+                    (mapcar
+                      '(lambda (lst)
+                        (if (isPrimeSouthCode (car lst))
+                          (car (cdr lst))
+                          0;non-Prime
+                        )
+                      )
+                      countLst
+                    )
+                  )
+                )
+                "\n* " (textDict "i_total_vtx") ": "
+                (itoa (apply '+ (mapcar '(lambda (lst) (cdr (cdr lst))) countLst)))
+                "\n* " (textDict "i_total_vtx_") ": "
+                (itoa
+                  (apply
+                    '+
+                    (mapcar
+                      '(lambda (lst)
+                        (if (isPrimeSouthCode (car lst))
+                          (cdr (cdr lst))
+                          0;non-Prime
+                        )
+                      )
+                      countLst
+                    )
+                  )
+                )
+                "\n================================================================\n"
+              )
+            )
+          )
+          (cons
             (mapcar
               '(lambda (lst)
                 (setq
@@ -213,54 +254,18 @@
                   )
                 )
                 (cons southCode (cons entNum vtxNum))
-              )
+              );Per SOUTH code statistics
               codeDict
-            )
-          )
-          ;Calc of total
-          (prompt
-            (strcat
-              "\n================================================================"
-              "\n* " (textDict "i_total_codes") ": " (itoa (length countLst))
-              "\n* " (textDict "i_total_ent") ": "
-              (itoa (apply '+ (mapcar '(lambda (lst) (car (cdr lst))) countLst)))
-              "\n* " (textDict "i_total_ent_") ": "
-              (itoa
-                (apply
-                  '+
-                  (mapcar
-                    '(lambda (lst)
-                      (if (isPrimeSouthCode (car lst))
-                        (car (cdr lst))
-                        0;non-Prime
-                      )
-                    )
-                    countLst
-                  )
-                )
-              )
-              "\n* " (textDict "i_total_vtx") ": "
-              (itoa (apply '+ (mapcar '(lambda (lst) (cdr (cdr lst))) countLst)))
-              "\n* " (textDict "i_total_vtx_") ": "
-              (itoa
-                (apply
-                  '+
-                  (mapcar
-                    '(lambda (lst)
-                      (if (isPrimeSouthCode (car lst))
-                        (cdr (cdr lst))
-                        0;non-Prime
-                      )
-                    )
-                    countLst
-                  )
-                )
-              )
-              "\n================================================================\n"
-            )
+            );codeDict->countLst
+            nil
           )
         );Count&Report
-        (prompt (strcat "\n" (textDict "e_no_SOUTH_ent") "\n"));Invalid codeDict
+        (prompt 
+          (strcat
+            "\n" (textDict "e_no_SOUTH_ent")
+            "\n================================================================\n"
+          )
+        );Invalid codeDict
       )
     );Valid inputted ss
     (prompt (strcat "\n" (textDict "e_invalid_ss") "\n"));Invalid inputted ss
