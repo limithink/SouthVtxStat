@@ -4,7 +4,7 @@
       T;Unicode mode, Utf-8 for text literal.
       nil;Non-Unicode mode, GB Charset for CN.
     )
-    T;SysVar "LISPSYS" not exist
+    nil;SysVar "LISPSYS" not exist
   )
 )
 
@@ -161,6 +161,10 @@
         ("ASCII" "Total Significant SOUTH Vertexes")
         ("CHS" "总计SOUTH非符号化实体顶点数量" 24635 35745 83 79 85 84 72 38750 31526 21495 21270 23454 20307 39030 28857 25968 37327)
       )
+      ("e_invalid_ss"
+        ("ASCII" "Invalid inputted selection-set")
+        ("CHS" "输入的选择集无效!" 36755 20837 30340 36873 25321 38598 26080 25928 33)
+      )
       ("e_no_SOUTH_ent"
         ("ASCII" "No valid or significant SOUTH Code Entity!")
         ("CHS" "无合法有效的SOUTH编码实体!" 26080 21512 27861 26377 25928 30340 83 79 85 84 72 32534 30721 23454 20307 33)
@@ -182,80 +186,85 @@
 )
 
 (defun main (ss)
-  (prompt
-    (strcat
-      "\n================================================================"
-      "\n* " (textDict "i_input_ent") ": " (itoa (sslength ss))
-    )
-  )
-  (if (setq codeDict (SouthEntDispatch ss))
+  (if (and ss (equal 'PICKSET (type ss)))
     (progn
-      ;Per SOUTH code statistics
-      (setq
-        countLst
-        (mapcar
-          '(lambda (lst)
-            (setq
-              southCode (car lst)
-              entLst (cdr lst)
-              entNum (length entLst)
-              vtxNum (apply '+ (mapcar 'statVertex entLst))
-            )
-            (prompt
-              (strcat
-                "\n+ Count SOUTH(" southCode ") " (plural entNum "Entity" "Entities") ", " (plural vtxNum "Vertex" "Vertexes") "."
-              )
-            )
-            (cons southCode (cons entNum vtxNum))
-          )
-          codeDict
-        )
-      )
-      ;Calc of total
       (prompt
         (strcat
           "\n================================================================"
-          "\n* " (textDict "i_total_codes") ": " (itoa (length countLst))
-          "\n* " (textDict "i_total_ent") ": "
-          (itoa (apply '+ (mapcar '(lambda (lst) (car (cdr lst))) countLst)))
-          "\n* " (textDict "i_total_ent_") ": "
-          (itoa
-            (apply
-              '+
-              (mapcar
-                '(lambda (lst)
-                  (if (isPrimeSouthCode (car lst))
-                    (car (cdr lst))
-                    0;non-Prime
-                  )
-                )
-                countLst
-              )
-            )
-          )
-          "\n* " (textDict "i_total_vtx") ": "
-          (itoa (apply '+ (mapcar '(lambda (lst) (cdr (cdr lst))) countLst)))
-          "\n* " (textDict "i_total_vtx_") ": "
-          (itoa
-            (apply
-              '+
-              (mapcar
-                '(lambda (lst)
-                  (if (isPrimeSouthCode (car lst))
-                    (cdr (cdr lst))
-                    0;non-Prime
-                  )
-                )
-                countLst
-              )
-            )
-          )
-          "\n================================================================\n"
+          "\n* " (textDict "i_input_ent") ": " (itoa (sslength ss))
         )
       )
-    );Count&Report
-    (prompt (strcat "\n" (textDict "e_no_SOUTH_ent") "\n"));Invalid codeDict
-  )
+      (if (setq codeDict (SouthEntDispatch ss))
+        (progn
+          ;Per SOUTH code statistics
+          (setq
+            countLst
+            (mapcar
+              '(lambda (lst)
+                (setq
+                  southCode (car lst)
+                  entLst (cdr lst)
+                  entNum (length entLst)
+                  vtxNum (apply '+ (mapcar 'statVertex entLst))
+                )
+                (prompt
+                  (strcat
+                    "\n+ Count SOUTH(" southCode ") " (plural entNum "Entity" "Entities") ", " (plural vtxNum "Vertex" "Vertexes") "."
+                  )
+                )
+                (cons southCode (cons entNum vtxNum))
+              )
+              codeDict
+            )
+          )
+          ;Calc of total
+          (prompt
+            (strcat
+              "\n================================================================"
+              "\n* " (textDict "i_total_codes") ": " (itoa (length countLst))
+              "\n* " (textDict "i_total_ent") ": "
+              (itoa (apply '+ (mapcar '(lambda (lst) (car (cdr lst))) countLst)))
+              "\n* " (textDict "i_total_ent_") ": "
+              (itoa
+                (apply
+                  '+
+                  (mapcar
+                    '(lambda (lst)
+                      (if (isPrimeSouthCode (car lst))
+                        (car (cdr lst))
+                        0;non-Prime
+                      )
+                    )
+                    countLst
+                  )
+                )
+              )
+              "\n* " (textDict "i_total_vtx") ": "
+              (itoa (apply '+ (mapcar '(lambda (lst) (cdr (cdr lst))) countLst)))
+              "\n* " (textDict "i_total_vtx_") ": "
+              (itoa
+                (apply
+                  '+
+                  (mapcar
+                    '(lambda (lst)
+                      (if (isPrimeSouthCode (car lst))
+                        (cdr (cdr lst))
+                        0;non-Prime
+                      )
+                    )
+                    countLst
+                  )
+                )
+              )
+              "\n================================================================\n"
+            )
+          )
+        );Count&Report
+        (prompt (strcat "\n" (textDict "e_no_SOUTH_ent") "\n"));Invalid codeDict
+      )
+    );Valid inputted ss
+    (prompt (strcat "\n" (textDict "e_invalid_ss") "\n"));Invalid inputted ss
+  ) 
   (princ)
 )
 
