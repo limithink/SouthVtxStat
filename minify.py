@@ -1,91 +1,65 @@
 import sys
 
-def jmpComment(src: bytearray, idx: int) -> int:
-    while idx < len(src):
-        tempC = src[idx]
-        idx += 1
-        if tempC == 0x0D or tempC == 0x0A:
-            break
-    if tempC == 0x0D and src[idx] == 0x0A:
-        idx += 1
-    return idx
-
-def jmpTab(src: bytearray, idx: int) -> int:
-    while idx < len(src):
-        if src[idx] != 0x09:
-            break
-        idx += 1
-    return idx
-
-def jmpSpace(src: bytearray, idx: int) -> int:
-    while idx < len(src):
-        if src[idx] != 0x20:
-            break 
-        idx += 1
-    return idx
-
-def jmp0D0A(src: bytearray, idx: int) -> int:
-    while idx < len(src):
-        tempC = src[idx]
-        if tempC != 0x0D and tempC != 0x0A:
-            break
-        idx += 1
-    return idx
-
 def minify(src: bytes) -> bytes: 
     ret = bytearray()
     srcLen = len(src)
-    ctrr = 0
+    ctr = 0
     prevC = b'('
     flagStrFin = True
-    while ctrr < srcLen:
-        curC = src[ctrr]
+    while ctr < srcLen:
         #Exhausting Continuous Non-significant Char
         isMod = False
-        while flagStrFin:
+        while flagStrFin and ctr < srcLen:
             isUpd = False
             #override '\t'
-            if curC == 0x09:
-                ctrr = jmpTab(src, ctrr + 1)
+            if src[ctr] == 0x09:
+                ctr += 1
                 isUpd = True
+                while ctr < srcLen and src[ctr] == 0x09:
+                    ctr += 1
             #override SPACE
-            if curC == 0x20:
-                ctrr = jmpSpace(src, ctrr + 1)
+            if src[ctr] == 0x20:
+                ctr += 1
                 isUpd = True
-            #override ';'
-            if curC == 0x3B:
-                ctrr = jmpComment(src, ctrr + 1)
+                while ctr < srcLen and src[ctr] == 0x20:
+                    ctr += 1
+            #override Comment followed by ';'
+            if src[ctr] == 0x3B:
+                ctr += 1
                 isUpd = True
-            #override '\n' '\r'
-            if curC == 0x0D or curC == 0x0A:
-                ctrr = jmp0D0A(src, ctrr + 1)
-                isUpd = True
-            if isUpd:
-                if ctrr < srcLen:
-                    isMod = True
-                    curC = src[ctrr]
+                while ctr < srcLen and src[ctr] not in [0x0D, 0x0A]:
+                    ctr += 1
+                if src[ctr] == 0x0D and src[ctr + 1] == 0x0A:
+                    ctr += 2
                 else:
-                    curC = None
-                    break
+                    ctr += 1
+            #override '\n' '\r'
+            if src[ctr] == 0x0D or src[ctr] == 0x0A:
+                ctr += 1
+                isUpd = True
+                while ctr < srcLen and src[ctr] in [0x0D, 0x0A]:
+                    ctr += 1
+            #State
+            if isUpd:
+                isMod = True
             else:
-                if isMod and (prevC != curC or curC not in [0x28, 0x29]):
-                    isMod = False
+                if isMod and prevC != 0x28 and src[ctr] != 0x29:
                     ret += b'\x20'
                 break
         #Trans State of Copying String
-        if curC == 0x22:
+        if ctr < srcLen and src[ctr] == 0x22:
             if flagStrFin:
                 flagStrFin = False
             else:
                 flagStrFin = True
             ret += b'\"'
-            ctrr += 1
+            ctr += 1
             continue
         #Copying
-        prevC = curC
-        if curC:
-            ret.append(curC)
-        ctrr += 1
+        if ctr < srcLen:
+            prevC = src[ctr]
+            ret.append(prevC)
+        ctr += 1
     return bytes(ret)
 
 if __name__ == "__main__" and len(sys.argv) >= 3:
